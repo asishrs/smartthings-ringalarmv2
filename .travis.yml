@@ -1,0 +1,14 @@
+language: go
+go:
+  - "1.11"
+script:
+  - GOOS=linux go build -o main
+  - zip deployment.zip main
+deploy:
+  provider: releases
+  api_key:
+    secure: walrKwu84C27fJ5M9f5YbR35+POZkczxl6MiZXmJ1wUzBaUrgfcqj0djcDBvqUcFN8CIX7aS8/Yjs6G9bPAU57RTR5IyBM/8EDWLAaxtSafqDLLojffSUgspaTHs2nbEdQpbe2KqEC8f0wuWpHMma3ka0S1u05I4Hi4MuGXqcA+umes0/OsvV3VEB2Lv5oYydpac76TPEqOVK59KWcxGcfBmjCeYHHq3I5lGIw1Wsuh9PnTqlz5qCAzyWdI8y35pkfmf4EYt/vzTsiJuGr412umXqYDzaVdzeDORzNDq3GurkJiRkwdL4keZipO5n3a5OIXLzS+mqGDvydpXDQTXM7AOGRJu1dm16EX+CwzoiuGYaJtcMFADuIyc2coEdb5eBHtCpn5SGY1eFITbfBDpasUPwzVYbV/PwEQ/dN97QS7poejskdBFh5xd5niSmd6kAxiMhm6w95GBdvOX5MMvLjkmq3kxwRBY+S1t4uIdx5MhNp68EfZnhgEG3grT14f/KKJNA1pEMeZXBDrJSsVVb7e4Vl12FjZvw/5YxOqN3LWowi7n9POr99BzWzyAUsBn8gjtMCpyy+9vheIaPVgNTp0CJHMK1Y1reo1rYU1YqYcu6v8A7yU2Dv2PcSRXqNp3OQzN5XquxwYJX9eQDeVtBorB2CfDy+9yYwAjj2/5n6A=
+  file: deployment.zip
+  skip_cleanup: true
+  on:
+    repo: asishrs/smartthings-ringalarmv2
