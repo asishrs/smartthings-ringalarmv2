@@ -12,3 +12,4 @@ deploy:
   skip_cleanup: true
   on:
     repo: asishrs/smartthings-ringalarmv2
+    tags: true
