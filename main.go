@@ -117,7 +117,7 @@ func setStatus(apiRequest public.Request, status string) (events.APIGatewayProxy
 	wsutil.Status(zID, status, connection)
 	return events.APIGatewayProxyResponse{
 		StatusCode: 200,
-		Body:       "string(result)",
+		Body:       "{\"message\": \"Success\"}",
 	}, nil
 }
 
