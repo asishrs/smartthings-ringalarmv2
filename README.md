@@ -198,6 +198,8 @@ Follow the steps [here](https://github.com/asishrs/smartthings)
   - **Handler** to `main`
   - **Code entry type** should be `Upload a .zip file` (no changes)
   - Click in **Upload** button and choose  **deployment.zip** from [releases](https://github.com/asishrs/smartthings-ringalarmv2/releases) (latest version) or the local built version in project root directory. 
+  - Click on **Save** button on right side top.
+- Test the API - Refer [Test lambda](#test-lambda)
 
 #### :arrow_up: Update Device Handler
 
