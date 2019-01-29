@@ -4,7 +4,7 @@
 
 :loudspeaker: ​This is the `version 2 `of this application. If you are looking for the `version 1`, visit https://github.com/asishrs/smartthings-ringalarm
 
-[TOC]
+Upgrading from v1? Check [here](#upgrading-from-v1) 
 
 > - :clock1: This setup is going to take 30 minutes to an hour depending on your exposure on the [SmartThings app](https://docs.smartthings.com/en/latest/getting-started/first-smartapp.html), [AWS Lambda](https://aws.amazon.com/lambda/), and Go.
 > - :dollar: Deploying the Bridge Application in AWS as a Lambda is free but you will be charged for the use of API Gateway and Data Transfer. 
@@ -188,9 +188,9 @@ Ring Alarm requires to pass location id and zid of your alarm as part the web so
 ## Setup Device Handler and Smart App
 Follow the steps [here](https://github.com/asishrs/smartthings)
 
-## :arrow_up: Upgrading from V1
+## ​​Upgrading from V1
 
-#### Update `Go` Function 
+#### :arrow_up: Update `Go` Function 
 
 - Open https://console.aws.amazon.com/lambda/home?region=us-east-1#/functions and select the `java` based version 1 function.
 - On the function page go to **Function code** section and update below 
@@ -199,7 +199,7 @@ Follow the steps [here](https://github.com/asishrs/smartthings)
   - **Code entry type** should be `Upload a .zip file` (no changes)
   - Click in **Upload** button and choose  **deployment.zip** from [releases](https://github.com/asishrs/smartthings-ringalarmv2/releases) (latest version) or the local built version in project root directory. 
 
-#### Update Device Handler
+#### :arrow_up: Update Device Handler
 
 Install the latest code for device handler from https://github.com/asishrs/smartthings/blob/master/devicetypes/asishrs/ringalarm.src/ringalarm.groovy
 
