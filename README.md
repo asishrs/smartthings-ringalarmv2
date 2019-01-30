@@ -6,6 +6,32 @@
 
 **:arrow_up: Upgrading from v1? Check [here](#upgrading-from-v1)** 
 
+<u>**SmartThings - Ring Alarm v2**</u>
+
+- [Bridge Application](#bridge-application)
+  - [Build Go Binary](#build-go-binary)
+  - [Deploy lambda in AWS](#deploy-lambda-in-aws)
+    - [Setup `Go function`](#setup-`go`-function)
+    - [Update API](#update-api)
+    - [Enable API Key](#enable-api-key)
+    - [Deploy API](#deploy-api)
+    - [Get API Key](#get-api-key)
+  - [Test Lambda](#test-lambda)
+    - [URLs](#urls)
+    - [Sample `meta` cURL](#sample-`meta`-curl)
+    - [Sample `status` cURL](#sample-`status`-curl)
+- [Get Ring Location Id and ZID](#get-ring-location-id-and-zid)
+  - [Location Id](#location-id)
+  - [ZID](#zid)
+- [Setup Device Handler and Smart App](#setup-device-handler-and-smart-app)
+- [Integration with webCoRE](#integration-with-webcore)
+- [Upgrading from V1](#upgrading-from-v1)
+  - [Update `Go` Function](#update-go-function)
+  - [Update Device Handler](#update-device-handler)
+- [Licence](#license)
+
+
+
 > - :clock1: This setup is going to take 30 minutes to an hour depending on your exposure on the [SmartThings app](https://docs.smartthings.com/en/latest/getting-started/first-smartapp.html), [AWS Lambda](https://aws.amazon.com/lambda/), and Go.
 > - :dollar: Deploying the Bridge Application in AWS as a Lambda is free but you will be charged for the use of API Gateway and Data Transfer. 
 
@@ -38,7 +64,7 @@ You have to install golang version 1.12 and [dep](https://github.com/golang/dep)
 > zip deployment.zip main
 ````
 
-### Deploy a lambda in AWS?
+### Deploy lambda in AWS
 #### Setup `Go` Function
 
 - Open https://console.aws.amazon.com/lambda/home?region=us-east-1#/functions
@@ -188,7 +214,27 @@ Ring Alarm requires to pass location id and zid of your alarm as part the web so
 ## Setup Device Handler and Smart App
 Follow the steps [here](https://github.com/asishrs/smartthings)
 
-## ​​Upgrading from V1
+## Integration with webCoRE
+
+You can add **Ring Alarm** to the *Which alarms and sirens* in the webCoRE and use like below in the pistons.
+
+```
+execute
+	if
+		Ring Alarm's status is 'home'
+	then
+		with
+			Your Device
+        do
+        	Turn Off;
+        end with;
+    end if;
+end execute;
+```
+
+
+
+## Upgrading from V1
 
 #### :arrow_up: Update `Go` Function 
 
