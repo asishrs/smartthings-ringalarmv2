@@ -6,6 +6,8 @@
 
 **:arrow_up: Upgrading from v1? Check [here](#upgrading-from-v1)** 
 
+------
+
 <u>**SmartThings - Ring Alarm v2**</u>
 
 - [Bridge Application](#bridge-application)
@@ -29,6 +31,8 @@
   - [Update `Go` Function](#update-go-function)
   - [Update Device Handler](#update-device-handler)
 - [Licence](#license)
+
+------
 
 
 
