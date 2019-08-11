@@ -147,6 +147,7 @@ func ActiveDevices(connection httputil.RingWSConnection) (*RingDeviceInfo, error
 	runes := []rune(wssResponse)
 	responseBody := string(runes[13 : len(wssResponse)-1])
 	//log.Printf("Response: %s\n\nJSON: %s", wssResponse, responseBody)
+	responseBody = responseBody[:strings.LastIndex(responseBody, "}") + 1]
 	log.Printf("Response: %s", responseBody)
 	err = json.Unmarshal([]byte(responseBody), &ringDeviceInfo)
 	if err != nil {
