@@ -4,6 +4,8 @@
 
 :loudspeaker: ​This is the `version 2 `of this application. If you are looking for the `version 1`, visit https://github.com/asishrs/smartthings-ringalarm
 
+:warning: This approach will not work if you have [two-factor authentication](https://support.ring.com/hc/en-us/articles/360024511592-Two-Factor-Security-Authentication-with-Ring-Products) enabled in Ring Account. 
+
 **:arrow_up: Upgrading from v1? Check [here](#upgrading-from-v1)** 
 
 ------
