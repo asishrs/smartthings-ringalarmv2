@@ -20,14 +20,13 @@ func clientError(status int) (events.APIGatewayProxyResponse, error) {
 	}, nil
 }
 
-func getAccessToken(apiRequest public.Request) (string, error) {
+func getAccessToken(apiRequest public.Request) (string, string, error) {
 	oauthRequest := httputil.OAuthRequest{"ring_official_ios", "password", apiRequest.Password, "client", apiRequest.User}
 	oauthResponse := httputil.AuthRequest("https://oauth.ring.com/oauth/token", oauthRequest)
-
-	exchangeRequest := httputil.ExchangeRequest{oauthResponse.AccessToken}
+	exchangeRequest := httputil.ExchangeRequest{oauthResponse.RefreshToken}
 	exchangeResponse := httputil.AccessTokenRequest("https://app.ring.com/api/v1/rs/launchcode/exchange", exchangeRequest)
 
-	return exchangeResponse.AccessToken, nil
+	return oauthResponse.AccessToken, exchangeResponse.AccessToken, nil
 }
 
 func getLocationId(apiRequest public.Request, accessToken string) string {
@@ -42,7 +41,7 @@ func getLocationId(apiRequest public.Request, accessToken string) string {
 func getZID(apiRequest public.Request) (string, error) {
 	zID := apiRequest.ZID
 	if len(zID) == 0 {
-		accessToken, _ := getAccessToken(apiRequest)
+		accessToken, _, _ := getAccessToken(apiRequest)
 		locationID := getLocationId(apiRequest, accessToken)
 		ringDeviceInfo, err := getDevices(locationID, accessToken)
 		if err != nil {
@@ -65,8 +64,9 @@ func getDevices(locationID string, accessToken string) (*wsutil.RingDeviceInfo, 
 
 func getStatus(apiRequest public.Request) (events.APIGatewayProxyResponse, error) {
 	// log.Printf("Request: %v", apiRequest)
-	accessToken, _ := getAccessToken(apiRequest)
+	accessToken, _, _ := getAccessToken(apiRequest)
 	locationID := getLocationId(apiRequest, accessToken)
+	// log.Printf("LocationID %v", locationID)
 
 	var ringEvents []public.RingDeviceEvent
 	history := httputil.HistoryRequest("https://app.ring.com/api/v1/rs/history", accessToken, locationID, strconv.Itoa(apiRequest.HistoryLimit))
@@ -106,7 +106,7 @@ func getStatus(apiRequest public.Request) (events.APIGatewayProxyResponse, error
 }
 
 func setStatus(apiRequest public.Request, status string) (events.APIGatewayProxyResponse, error) {
-	accessToken, _ := getAccessToken(apiRequest)
+	accessToken, _, _ := getAccessToken(apiRequest)
 	locationID := getLocationId(apiRequest, accessToken)
 	zID, err := getZID(apiRequest)
 	if err != nil {
@@ -122,7 +122,7 @@ func setStatus(apiRequest public.Request, status string) (events.APIGatewayProxy
 }
 
 func getMetaData(apiRequest public.Request) (events.APIGatewayProxyResponse, error) {
-	accessToken, _ := getAccessToken(apiRequest)
+	accessToken, _, _ := getAccessToken(apiRequest)
 	locationID := getLocationId(apiRequest, accessToken)
 	zID, err := getZID(apiRequest)
 	if err != nil {
