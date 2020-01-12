@@ -19,7 +19,8 @@ jobs:
     - name: Build
       run: |
         export GO111MODULE=on
-        GOOS=linux go build -o bin/main
+        GOOS=linux go build -o bin/st-ringalarm-linux
+        GOOS=darwin GOARCH=amd64 go build -o bin/st-ringalarm-macOS
         GOOS=windows GOARCH=386 go build -o bin/main.exe
     
     - name: Archive Artifacts
