@@ -20,10 +20,9 @@ jobs:
       run: |
         export GO111MODULE=on
         GOOS=linux go build -o main
-        zip deployment.zip main
     
     - name: Archive Artifacts
       uses: actions/upload-artifact@v1
       with:
-        name: deployment
+        name: binaries
         path: main
