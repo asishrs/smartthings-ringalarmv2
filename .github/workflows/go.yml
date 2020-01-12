@@ -16,17 +16,14 @@ jobs:
     - name: Check out code into the Go module directory
       uses: actions/checkout@v1
 
-    - name: build
+    - name: Build
       run: |
         export GO111MODULE=on
-        GOOS=linux go build -o bin/main
-        zip bin/release.zip bin/main
+        GOOS=linux go build -o main
+        # zip bin/release.zip bin/main
     
-    - name: Archive artifacts
+    - name: Archive Artifacts
       uses: actions/upload-artifact@v1
       with:
-        name: release
-        path: bin/release.zip
-
-    - name: Build
-      run: GOOS=linux go build -o main .
+        name: deployment
+        path: main
