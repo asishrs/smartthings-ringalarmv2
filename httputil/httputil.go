@@ -16,12 +16,22 @@ type OAuthRequest struct {
 	Username  string `json:"username"`
 }
 
-type OAuthResponse struct {
-	AccessToken  string `json:"access_token"`
-	ExpiresIn    string `json:"expires_in"`
+type OAuthRequestWithRefreshToken struct {
+	ClientID     string `json:"client_id"`
+	GrantType    string `json:"grant_type"`
 	RefreshToken string `json:"refresh_token"`
-	Scope        string `json:"scope"`
-	TokenType    string `json:"token_type"`
+}
+
+type OAuthResponse struct {
+	AccessToken       string `json:"access_token"`
+	ExpiresIn         string `json:"expires_in"`
+	RefreshToken      string `json:"refresh_token"`
+	Scope             string `json:"scope"`
+	TokenType         string `json:"token_type"`
+	Error             string `json:"error"`
+	ErrorDescription  string `json:"error_description"`
+	NextTimeInSeconds int32  `json:"next_time_in_secs"`
+	Phone             string `json:"phone"`
 }
 
 type ExchangeRequest struct {
@@ -159,14 +169,40 @@ type RingWSConnection struct {
 	AuthCode string `json:"authCode"`
 }
 
-func AuthRequest(url string, oauthRequest OAuthRequest) OAuthResponse {
+func AuthRequest(url string, oauthRequest OAuthRequest, code string) (OAuthResponse, error) {
 	// log.Printf("OAuthRequest Data: %v", oauthRequest)
+	var headers map[string]string
+	if code != "" {
+		headers = make(map[string]string)
+		headers["2fa-support"] = "true"
+		headers["2fa-code"] = code
+		headers["Content-Type"] = "application/json"
+	}
+
 	requestByte, _ := json.Marshal(oauthRequest)
-	responseBody := post(url, nil, requestByte)
+	responseBody, err := post(url, headers, requestByte)
+	if err != nil {
+		return OAuthResponse{}, err
+	}
+
 	var oauthResponse OAuthResponse
 	json.Unmarshal(responseBody, &oauthResponse)
 	// log.Println("Temp Token " + oauthResponse.AccessToken)
-	return oauthResponse
+	return oauthResponse, nil
+}
+
+func AuthRequestWithRefreshToken(url string, oauthRequest OAuthRequestWithRefreshToken) (OAuthResponse, error) {
+	// log.Printf("OAuthRequestWithRefreshToken Data: %v", oauthRequest)
+	requestByte, _ := json.Marshal(oauthRequest)
+	responseBody, err := post(url, nil, requestByte)
+	if err != nil {
+		return OAuthResponse{}, err
+	}
+
+	var oauthResponse OAuthResponse
+	json.Unmarshal(responseBody, &oauthResponse)
+	// log.Println("Temp Token " + oauthResponse.AccessToken)
+	return oauthResponse, nil
 }
 
 func AccessTokenRequest(url string, exchangeRequest ExchangeRequest) ExchangeResponse {
@@ -174,7 +210,7 @@ func AccessTokenRequest(url string, exchangeRequest ExchangeRequest) ExchangeRes
 	headers := map[string]string{
 		"content-type": "application/json",
 	}
-	responseBody := post(url, headers, requestByte)
+	responseBody, _ := post(url, headers, requestByte)
 	var exchangeResponse ExchangeResponse
 	json.Unmarshal(responseBody, &exchangeResponse)
 	// log.Printf("Access Token %v", exchangeResponse.AccessToken)
@@ -217,7 +253,7 @@ func ConnectionRequest(url string, locationId string, accessToken string) RingWS
 		"Content-Type":  "application/x-www-form-urlencoded",
 	}
 
-	responseBody := post(url, headers, []byte("accountId="+locationId))
+	responseBody, _ := post(url, headers, []byte("accountId="+locationId))
 	var connection RingWSConnection
 	json.Unmarshal(responseBody, &connection)
 	// log.Println("Connection [" + connection.Server + ", " + connection.AuthCode + "]")
@@ -245,7 +281,7 @@ func get(url string, headers map[string]string, params map[string]string) []byte
 	return responseBody
 }
 
-func post(url string, headers map[string]string, requestBody []byte) []byte {
+func post(url string, headers map[string]string, requestBody []byte) ([]byte, error) {
 	req, _ := http.NewRequest("POST", url, bytes.NewBuffer(requestBody))
 	for name, value := range headers {
 		req.Header.Add(name, value)
@@ -254,9 +290,10 @@ func post(url string, headers map[string]string, requestBody []byte) []byte {
 	res, err := http.DefaultClient.Do(req)
 	if err != nil {
 		log.Fatal(err)
+		return nil, err
 	}
 	defer res.Body.Close()
 	responseBody, _ := ioutil.ReadAll(res.Body)
 	// log.Printf("Url - %v, Header - %v", url, headers)
-	return responseBody
+	return responseBody, nil
 }

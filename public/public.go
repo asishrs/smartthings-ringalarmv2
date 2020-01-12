@@ -6,6 +6,7 @@ type Request struct {
 	LocationID   string `json:"locationId"`
 	ZID          string `json:"zId"`
 	HistoryLimit int    `json:"historyLimit"`
+	RefreshToken string `json:"refreshToken"`
 }
 
 // RingDeviceStatus represents the Device data on Ring Alarm Devices
