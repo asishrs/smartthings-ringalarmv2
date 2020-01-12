@@ -21,7 +21,7 @@ jobs:
         export GO111MODULE=on
         GOOS=linux go build -o bin/st-ringalarm-linux
         GOOS=darwin GOARCH=amd64 go build -o bin/st-ringalarm-macOS
-        GOOS=windows GOARCH=386 go build -o bin/main.exe
+        GOOS=windows GOARCH=386 go build -o bin/st-ringalarm.exe
     
     - name: Archive Artifacts
       uses: actions/upload-artifact@v1
