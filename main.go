@@ -68,7 +68,7 @@ func getDevices(locationID string, accessToken string) (*wsutil.RingDeviceInfo, 
 }
 
 func getStatus(apiRequest public.Request) (events.APIGatewayProxyResponse, error) {
-	log.Printf("Request: %v", apiRequest)
+	//log.Printf("Request: %v", apiRequest)
 	accessToken, _ := getAccessToken(apiRequest)
 	locationID := getLocationId(apiRequest, accessToken)
 	log.Printf("LocationID %v", locationID)
