@@ -62,10 +62,9 @@ If you want to build the Lambda on your side, you can do that by cloning this re
 
 #### Build Go Binary
 
-You have to install golang version 1.12 and [dep](https://github.com/golang/dep) for this.
+You have to install golang version 1.13 for this.
 
 ````shell
-> dep ensure
 > GOOS=linux go build -o main
 > zip deployment.zip main
 ````
