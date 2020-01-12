@@ -19,10 +19,11 @@ jobs:
     - name: Build
       run: |
         export GO111MODULE=on
-        GOOS=linux go build -o main
+        GOOS=linux go build -o /app/bin/main
+        GOOS=windows GOARCH=386 go build -o /app/bin/main.exe
     
     - name: Archive Artifacts
       uses: actions/upload-artifact@v1
       with:
         name: binaries
-        path: main
+        path: /app/bin/
