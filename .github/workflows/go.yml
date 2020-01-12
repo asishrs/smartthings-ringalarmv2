@@ -16,13 +16,11 @@ jobs:
     - name: Check out code into the Go module directory
       uses: actions/checkout@v1
 
-    - name: Get dependencies
+    - name: build
       run: |
-        go get -v -t -d ./...
-        if [ -f Gopkg.toml ]; then
-            curl https://raw.githubusercontent.com/golang/dep/master/install.sh | sh
-            dep ensure
-        fi
+        export GO111MODULE=on
+        GOOS=linux go build -o bin/main
+        zip release.zip bin/main
 
     - name: Build
       run: GOOS=linux go build -o main .
