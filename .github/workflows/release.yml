@@ -8,7 +8,7 @@ name: Release
 
 jobs:
   build:
-    name: Release Asset
+    name: Release 
     runs-on: ubuntu-latest
     steps:
 

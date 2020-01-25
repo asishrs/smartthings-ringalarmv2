@@ -1,37 +1,30 @@
-# SmartThings - Ring Alarm v2
+# SmartThings - Ring Alarm v2 ![](https://github.com/asishrs/smartthings-ringalarmv2/workflows/Build/badge.svg) ![](https://github.com/asishrs/smartthings-ringalarmv2/workflows/Release/badge.svg) 
 
-![Build Status](https://api.travis-ci.org/asishrs/smartthings-ringalarmv2.svg?branch=master "Build Status")
+:loudspeaker: ​This is the `version 3 `of this application. If you are looking for older versions see the links below. No support for older versions. In case of issues, I recommend to update to the latest versions.
+* [version 1](https://github.com/asishrs/smartthings-ringalarm)
+* [version 2](v2.md) 
 
-:loudspeaker: ​This is the `version 2 `of this application. If you are looking for the `version 1`, visit https://github.com/asishrs/smartthings-ringalarm
-
-:warning: This approach will not work if you have [two-factor authentication](https://support.ring.com/hc/en-us/articles/360024511592-Two-Factor-Security-Authentication-with-Ring-Products) enabled in Ring Account. 
-
-**:arrow_up: Upgrading from v1? Check [here](#upgrading-from-v1)** 
+**Note:** This approach is tested using [SmartThings Classic App](https://support.smartthings.com/hc/en-us/articles/205380554-Things-in-the-SmartThings-Classic-app). If you are on in new SmartThings app, let me know if this approach requires any changes. PRs are welcome!
 
 ------
 
 <u>**SmartThings - Ring Alarm v2**</u>
 
 - [Bridge Application](#bridge-application)
-  - [Build Go Binary](#build-go-binary)
-  - [Deploy lambda in AWS](#deploy-lambda-in-aws)
-    - [Setup `Go function`](#setup-`go`-function)
-    - [Update API](#update-api)
-    - [Enable API Key](#enable-api-key)
-    - [Deploy API](#deploy-api)
+  - [Get the lambda binary](#get-the-lambda-binary)
+    - [Download the latest version from Github Release (Recommended)](#download-the-latest-version-from-Github-Release-(Recommended))
+    - [Build Go Binary from code](#Build-Go-Binary-from-code)
+  - [Store the lambda to Amazon S3 Bucket](#Store-the-lambda-to-Amazon-S3-Bucket)
+  - [Create AWS Resources and Deploy the Lambda](#Create-AWS-Resources-and-Deploy-the-Lambda.)
+  - [Get your API Url and Key](#Get-your-API-Url-and-Key)
+    - [Get Invoke URL](#Get-Invoke-URL)
     - [Get API Key](#get-api-key)
-  - [Test Lambda](#test-lambda)
-    - [URLs](#urls)
-    - [Sample `meta` cURL](#sample-`meta`-curl)
-    - [Sample `status` cURL](#sample-`status`-curl)
-- [Get Ring Location Id and ZID](#get-ring-location-id-and-zid)
-  - [Location Id](#location-id)
-  - [ZID](#zid)
+- [Test Lambda (Optional)](#test-lambda-(optional))
+  - [URLs](#urls)
+  - [Sample `meta` cURL](#sample-`meta`-curl)
+  - [Sample `status` cURL](#sample-`status`-curl)
 - [Setup Device Handler and Smart App](#setup-device-handler-and-smart-app)
 - [Integration with webCoRE](#integration-with-webcore)
-- [Upgrading from V1](#upgrading-from-v1)
-  - [Update `Go` Function](#update-go-function)
-  - [Update Device Handler](#update-device-handler)
 - [Licence](#license)
 
 ------
@@ -45,90 +38,96 @@ This page explains, how to set up Ring Alarm as a virtual device on your SmartTh
 
 ![SmartThings - Ring Alarm](images/SmartThings-Ring.png?raw=true "SmartThings - Ring Alarm")
 
-**Note:** I have SmartThings classic app, and this approach is tested using that. If you are on in new SmartThings app, let me know if this approach requires any changes. PRs are welcome!
-
-If you are still reading this,  that means you are ready to invest at least an hour!!!
+If you are still reading this, that means you are ready to invest at least an hour!!!
 
 This setup requires the deployment of two different components.
 
 ## Bridge Application
-As I mentioned before, the bridge application is a proxy between the SmartThings custom app and Ring Alarm. For ease of deployment, I created this as an [AWS Lambda function](https://aws.amazon.com/lambda/) using Go.
 
-You need to install this Lambda in AWS and set up an API gateway to communicate to that. This approach is using the API with Lambda integration using API Gateway. This code also requires an API authentication token. If you are already familiar with setting Lambda with API token, you can skip to the SmartThings Device Handler and Smart App.
+As I mentioned before, the bridge application is a proxy between the SmartThings custom app and Ring Alarm. Bridge application will be deployed as an [AWS Lambda function](https://aws.amazon.com/lambda/) using Go. The `AWS Lambda function` will be exposed to the SmartThings App via a [Amazon API Gateway](https://aws.amazon.com/api-gateway/). To secure the api endpoint, this setup uses an [api-key](https://docs.aws.amazon.com/apigateway/api-reference/resource/api-key/). This setup uses [AWS Cloud​Formation](https://aws.amazon.com/cloudformation/) template to automatically create the required AWS resources and deploy the `lambda build` from [Amazon S3 Bucket](https://docs.aws.amazon.com/s3/index.html)
 
-Follow the below steps to install and setup Lambda in AWS. You need to have AWS  account and the latest Lambda build from [here](https://github.com/asishrs/smartthings-ringalarmv2/releases) before proceeding to the next step. If you don't have an account, start [here](https://aws.amazon.com/account/)
+You need to have an active AWS account and the latest Lambda build from [here](https://github.com/asishrs/smartthings-ringalarmv2/releases) before proceeding to the next step. 
 
-If you want to build the Lambda on your side, you can do that by cloning this repo and then executing below steps. 
+If you don't have an account, start [here](https://aws.amazon.com/account/) 
 
-#### Build Go Binary
+Follow steps below to setup the SmartThings Ring Alarm Lambda.
 
-You have to install golang version 1.13 for this.
+### Get the lambda binary
+
+#### Download the latest version from Github Release (Recommended)
+
+You can download the latest `deployment.zip` from [Github Release page](https://github.com/asishrs/smartthings-ringalarmv2/releases)
+
+
+#### Build Go Binary from code
+
+If you want to build the Lambda from the source code, you can do that by cloning this repo and then executing below steps. 
+
+You have to install golang version 1.13 or higher for this.
 
 ````shell
 > GOOS=linux go build -o main
 > zip deployment.zip main
 ````
 
-### Deploy lambda in AWS
-#### Setup `Go` Function
+### Store the lambda to Amazon S3 Bucket
 
-- Open https://console.aws.amazon.com/lambda/home?region=us-east-1#/functions
-- Click on **Create Function** and provide below details
-  * **Name** - a name for your lambda (Example: Ring-Alarm)
-  * **Runtime** - Select *Go 1.x*
-  * **Role** - Select *Create new role from a template(s)*
-  * **Role Name** - a name for the role (Example: ring-alarm-user)
-  * **Policy templates** - Leave Empty
-- Click on **Create function**. This process takes a few seconds.
-- Once your function is ready, you will be directed to function settings page.
-- On the **Designer** section, click on **API gateway** on the left side navigation.
-- Configure API Gateway
-  * **API** - Select *Create a new API*
-  * **Security** - Select *Open with API Key*
-  * Click on **Add**
-- Click on **Save** button on right side top.
-- On the **Designer** section, click on your function name.
-- In the Function Code section, make sure you have values for **Upload a .zip file** as **Code Entry** **type** and **Go 1.x** as **Runtime**.
-- Click on the **Upload** button and select the **deployment.zip** from [releases](https://github.com/asishrs/smartthings-ringalarmv2/releases) (latest version) or the local built version in project root directory.
-- Update **Handler** as ***main***
-- Click on **Save** button on right side top.
+You need to store the `deployment.zip` file in an `amazon s3 bucket` so that the `cloud formation template` can use that for deployment.
 
-#### Update API
+Follow below steps to create a bucket and upload the `deployment.zip` file to that bucket.
+1. Login to AWS Account and the navigate to https://s3.console.aws.amazon.com/s3/home?region=us-east-1 (You may be different region based on your account setup)
+1. Click on **Create Bucket**
+1. On **Name and region** page page enter name for your bucket as **st-ring-alarm** (You can change the name if you want, you will have an option to provide your bucket name during the stack setup later.)
+1. Leave everything else as default values on **Name and region** page and click **next** button
+1. Leave everything as default values on **Configure options** page and click **next** button
+1. Leave everything as default values on **Set permissions** page and click **next** button
+1. On **Review** page click on **Create Bucket**
+1. Select the newly created bucket on https://s3.console.aws.amazon.com/s3/home?region=us-east-1 and click on **Upload** button
+1. Upload the `deployment.zip` file either via **Drag and Drop** or by clicking on **Add Files** button. Leave all options as default on the upload page.
 
-* Open https://us-east-1.console.aws.amazon.com/apigateway/home?region=us-east-1#/apis
-* Under APIs, click on your API.
-* From the Actions, select **Create Resource**
-  * Enable Configure as proxy resource
-  * Resource Path - Update value as **{ring-action+}**
-  * Click on **Create Resource**
-  * Lambda Function - Enter name of your Lambda function
-  * Click on **Save**
-  * Click in **Ok**
+### Create AWS Resources and Deploy the Lambda.
 
-#### Enable API Key
+You will be using [AWS Cloud​Formation template](aws/ringalarm-gateway.yaml) to create the stack. 
 
-* Click in **ANY** from the Resource **/{ring-action+}**
-* Click on **Method Request** on the right-hand side.
-  * Change **API Key Required** to *true* and click on the small **apply** icon.
+You need to have either this repository cloned or save a copy of [ringalarm-gateway.yaml](https://raw.githubusercontent.com/asishrs/smartthings-ringalarmv2/master/aws/ringalarm-gateway.yaml) file on your local before proceeding. 
 
-#### Deploy API
+1. Login to AWS Account and the navigate to https://console.aws.amazon.com/cloudformation/home?region=us-east-1 (You may be different region based on your account setup)
+1. Click on **Create Stack** and choose **With new resources(standard)**
+1. On the **Specify template** page choose **Upload a template file**
+1. Click on **Choose file** and select the `ringalarm-gateway.yaml` from cloned repository or from download.
+1. Click **Next**
+1. On the **Specify stack details** page enter values
+    1. Enter stack name as `st-ring-alarm` - You can use custom names if you want. 
+    1. `apiStageName` - Leave as default
+    1. `lambdaFunctionName` - Leave as default
+    1. `s3BucketName` - If you have selected any names other than `st-ring-alarm` for your `amazon s3 bucket` you need to update that here otherwise leave as default.
+1. On **Specify stack details** page click **Next**
+1. Leave everything as default on **Configure stack options** page and click **Next**
+1. On **Review** page, scroll down to bottom and select *I acknowledge that AWS CloudFormation might create IAM resources.* and click on **Create Stack**
+1. Wait for 2-5 minutes for the creation of the stack. You will see a status **CREATE_COMPLETE** once your stack is successfully created. 
 
-* Under the API, select your API
-* Click in **Resources**
-* From the Actions, select **Deploy API**
-* Select Deployment stage as **default**
-* Click **Deploy**
-* Save **Invoke URL** for SmartThings Application configuration
+### Get your API Url and Key
+
+In  this step, you will get your API Invoke URL and API Key for SmartThings Application configuration.
+
+#### Get Invoke URL
+
+1. Login to AWS Account and the navigate to https://console.aws.amazon.com/apigateway/main/apis?region=us-east-1 (You may be different region based on your account setup) 
+Under the API, select your API
+1. Click on **st-ring-alarm-api** (If you have entered a custom stack name the name of the api will be `<your stack name>-api`)
+1. Click on **Dashboard** under **API:st-ring-alarm-api** (If you have entered a custom stack name the name of the api will be `API:<your stack name>-api`)
+1. You can see **Invoke URL** on top of the page, save it for SmartThings Application configuration
 
 #### Get API Key
 
-* From the API main page, select API Keys
-* Select your API Key
-* Click on **Show** link on the API key
-* Save API Key for SmartThings Application configuration.
+1. From the API main page, select **API Keys**
+1. Select the key **st-ring-alarm-apikey** (If you have entered a custom stack name the name of the key will be `<your stack name>-apikey`)
+1. Click on **Show** link on the API key
+1. Save API Key for SmartThings Application configuration.
 
-### Test Lambda
+### Test Lambda (Optional)
 
+You can test your lambda before proceeding to next steps
 #### URLs
 
 - POST /{Invoke URL From Above}/meta
@@ -159,8 +158,6 @@ You have to install golang version 1.13 for this.
     "zId": "your_ring_alarm_zid"
 }
 ```
-
-
 
 #### Sample `status` cURL
 
@@ -194,28 +191,6 @@ Request without `locattionId` and `zid`.
   }'
 ```
 
-## Get Ring Location Id and ZID
-
-Ring Alarm requires to pass location id and zid of your alarm as part the web sockets call. Though this can achieve via API calls, we don't want to do that as this increases the total number of calls to make before actual web sockets call. The recommended way to get the `locationId` and `zid` is via the `/meta` api call (check sample request above). If you can't do that, follow below steps to get those values from the network panel of your browser. 
-
-#### Location Id
-- Open your **chrome network panel** (*Option + Command + I in Mac*) and login to Ring Alarm.
-- In the network panel, search for **locations**.
-- Click on the location API call on the left side.
-- From the right side
-  * In the **Header panel**, confirm the URL is https://app.ring.com/rhq/v1/devices/v1/locations
-  * In the **Preview panel**, you can see the value of **location_id**. Save **location_id** for lambda testing and SmartThings Application configuration.
-
-#### ZID
-- *Optional*, open your **chrome network panel** (*Option + Command + I in Mac*) and login to Ring Alarm.
-- In the network panel, search for **socket.io**
-- Click on the WebSocket call on the left side.
-- From the right side
-  * In the **Frames** panel, check a frame response with message like `"msg":"DeviceInfoDocGetList"` (**Tip**: *If you are using chrome browser, you can see a red color down arrow on the left side of message.*)
-  * Copy that value (*Right Click on the mouse and select **Copy Message***) and paste in your favorite text editor. I prefer an editor like Visual Studio Code as I can format that big message using JSON format.
-  * Search for **Ring Alarm** on the message.
-  * On that block, you can find a JSON key **zid**. Save **zid** for lambda testing and SmartThings Application configuration.
-
 ## Setup Device Handler and Smart App
 Follow the steps [here](https://github.com/asishrs/smartthings)
 
@@ -235,35 +210,6 @@ execute
         end with;
     end if;
 end execute;
-```
-
-
-
-## Upgrading from V1
-
-#### :arrow_up: Update `Go` Function 
-
-- Open https://console.aws.amazon.com/lambda/home?region=us-east-1#/functions and select the `java` based version 1 function.
-- On the function page go to **Function code** section and update below 
-  - **Runtime** to `Go 1.x`
-  - **Handler** to `main`
-  - **Code entry type** should be `Upload a .zip file` (no changes)
-  - Click in **Upload** button and choose  **deployment.zip** from [releases](https://github.com/asishrs/smartthings-ringalarmv2/releases) (latest version) or the local built version in project root directory. 
-  - Click on **Save** button on right side top.
-- Test the API - Refer [Test lambda](#test-lambda)
-
-#### :arrow_up: Update Device Handler
-
-Install the latest code for device handler from https://github.com/asishrs/smartthings/blob/master/devicetypes/asishrs/ringalarm.src/ringalarm.groovy
-
-✏️ Update the number of ring devices in the code, check for below part.
-
-```
-//Define number of devices here.
-def motionSensorCount = 5
-def contactSensorCount = 6
-def rangeExtenderCount = 1
-def keypadCount = 1
 ```
 
 ## License
