@@ -1,7 +1,6 @@
-# SmartThings - Ring Alarm v2
+# SmartThings - Ring Alarm v2 ![](https://github.com/asishrs/smartthings-ringalarmv2/workflows/Build/badge.svg) ![](https://github.com/asishrs/smartthings-ringalarmv2/workflows/Release/badge.svg) 
 
-![](https://github.com/asishrs/smartthings-ringalarmv2/workflows/.github/workflows/release.yml/badge.svg)
-![Build Status](https://api.travis-ci.org/asishrs/smartthings-ringalarmv2.svg?branch=master "Build Status")
+![CI](https://api.travis-ci.org/asishrs/smartthings-ringalarmv2.svg?branch=master "Build Status")
 
 :loudspeaker: ​This is the `version 2 `of this application. If you are looking for the `version 1`, visit https://github.com/asishrs/smartthings-ringalarm
 
