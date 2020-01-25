@@ -20,6 +20,7 @@ jobs:
       run: |
         export GO111MODULE=on
         GOOS=linux go build -o bin/st-ringalarm-linux
+        zip bin/deployment.zip bin/st-ringalarm-linux
         GOOS=darwin GOARCH=amd64 go build -o bin/st-ringalarm-macOS
         GOOS=windows GOARCH=386 go build -o bin/st-ringalarm.exe
     
