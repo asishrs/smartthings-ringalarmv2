@@ -1,3 +1,7 @@
 vendor
 deployment.zip
 main
+stack.yaml
+main_test.go
+README.wiki
+test.json
