@@ -32,7 +32,7 @@
 
 This page explains, how to set up Ring Alarm as a virtual device on your SmartThings. Ring Alarm uses WebSockets to communicate to ring server for checking Alarm Status and Status changes. Unfortunately, SmartThings app does not support WebSockets, and we have to create a bridge application which accepts HTTP calls from SmartThings and communicate to Ring Alarm via WebSockets. Below diagram explains the flow.
 
-![SmartThings - Ring Alarm](images/SmartThings-Ring.png?raw=true "SmartThings - Ring Alarm")
+![SmartThings - Ring Alarm](images/high-level.png?raw=true "SmartThings - Ring Alarm")
 
 If you are still reading this, that means you are ready to invest at least an hour!!!
 
@@ -41,6 +41,9 @@ This setup requires the deployment of two different components.
 ## Bridge Application
 
 As I mentioned before, the bridge application is a proxy between the SmartThings custom app and Ring Alarm. Bridge application will be deployed as an [AWS Lambda function](https://aws.amazon.com/lambda/) using Go. The `AWS Lambda function` will be exposed to the SmartThings App via a [Amazon API Gateway](https://aws.amazon.com/api-gateway/). To secure the api endpoint, this setup uses an [api-key](https://docs.aws.amazon.com/apigateway/api-reference/resource/api-key/). This setup uses [AWS Cloud​Formation](https://aws.amazon.com/cloudformation/) template to automatically create the required AWS resources and deploy the `lambda build` from [Amazon S3 Bucket](https://docs.aws.amazon.com/s3/index.html)
+
+Below diagram shows details of the AWS services you will be creating for this.
+![SmartThings - Ring Alarm AWS Services](images/detail.png?raw=true "SmartThings - Ring Alarm AWS Services")
 
 You need to have an active AWS account and the latest Lambda build from [here](https://github.com/asishrs/smartthings-ringalarmv2/releases) before proceeding to the next step. 
 
