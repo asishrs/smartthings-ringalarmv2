@@ -161,12 +161,6 @@ Resources:
       - ApiId: !Ref ApiGatewayRestApi
         Stage: !Ref "apiStageName"    
       Description: !Join [" ", [{"Ref": "AWS::StackName"}, "usage plan"]]
-      Quota:
-        Limit: 2000
-        Period: MONTH
-      Throttle:
-        BurstLimit: 10
-        RateLimit: 10
       UsagePlanName: !Join ["", [{"Ref": "AWS::StackName"}, "-usage-plan"]]
   ApiUsagePlanKey:
     Type: "AWS::ApiGateway::UsagePlanKey"
