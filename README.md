@@ -1,4 +1,4 @@
-# SmartThings - Ring Alarm v2 ![](https://github.com/asishrs/smartthings-ringalarmv2/workflows/Build/badge.svg) ![](https://github.com/asishrs/smartthings-ringalarmv2/workflows/Release/badge.svg) 
+# SmartThings - Ring Alarm ![](https://github.com/asishrs/smartthings-ringalarmv2/workflows/Build/badge.svg) ![](https://github.com/asishrs/smartthings-ringalarmv2/workflows/Release/badge.svg) 
 
 :loudspeaker: ​This is the `version 3 `of this application. If you are looking for older versions see the links below. No support for older versions. In case of issues, I recommend to update to the latest versions.
 * [version 1](https://github.com/asishrs/smartthings-ringalarm)
