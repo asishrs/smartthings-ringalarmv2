@@ -41,8 +41,20 @@ type ExchangeRequest struct {
 type ExchangeResponse struct {
 	AccessToken string `json:"access_token"`
 }
+
+type Address struct {
+	Line1   string `json:"address1"`
+	Line2   string `json:"address2"`
+	City    string `json:"city"`
+	State   string `json:"state"`
+	ZipCode string `json:"zip_code"`
+	Country string `json:"country"`
+}
+
 type UserLocation struct {
-	LocationID string `json:"location_id"`
+	LocationID string  `json:"location_id"`
+	Name       string  `json:"name"`
+	Address    Address `json:"address"`
 }
 
 type UserLocations struct {
@@ -170,7 +182,7 @@ type RingWSConnection struct {
 }
 
 func AuthRequest(url string, oauthRequest OAuthRequest, code string) (OAuthResponse, error) {
-	// log.Printf("OAuthRequest Data: %v", oauthRequest)
+	log.Printf("OAuthRequest Data: %v", oauthRequest)
 	var headers map[string]string
 	if code != "" {
 		headers = make(map[string]string)
@@ -187,12 +199,12 @@ func AuthRequest(url string, oauthRequest OAuthRequest, code string) (OAuthRespo
 
 	var oauthResponse OAuthResponse
 	json.Unmarshal(responseBody, &oauthResponse)
-	// log.Println("Temp Token " + oauthResponse.AccessToken)
+	log.Println("Temp Token " + oauthResponse.AccessToken)
 	return oauthResponse, nil
 }
 
 func AuthRequestWithRefreshToken(url string, oauthRequest OAuthRequestWithRefreshToken) (OAuthResponse, error) {
-	// log.Printf("OAuthRequestWithRefreshToken Data: %v", oauthRequest)
+	log.Printf("OAuthRequestWithRefreshToken Data: %v", oauthRequest)
 	requestByte, _ := json.Marshal(oauthRequest)
 	responseBody, err := post(url, nil, requestByte)
 	if err != nil {
@@ -201,7 +213,7 @@ func AuthRequestWithRefreshToken(url string, oauthRequest OAuthRequestWithRefres
 
 	var oauthResponse OAuthResponse
 	json.Unmarshal(responseBody, &oauthResponse)
-	// log.Println("Temp Token " + oauthResponse.AccessToken)
+	log.Printf("Temp Token %v\n", oauthResponse)
 	return oauthResponse, nil
 }
 
@@ -217,7 +229,8 @@ func AccessTokenRequest(url string, exchangeRequest ExchangeRequest) ExchangeRes
 	return exchangeResponse
 }
 
-func LocationRequest(url string, accessToken string) string {
+func LocationRequest(url string, accessToken string) UserLocations {
+	//log.Printf("LocationRequest Data: %v", accessToken)
 	headers := map[string]string{
 		"Authorization": "Bearer " + accessToken,
 	}
@@ -225,8 +238,8 @@ func LocationRequest(url string, accessToken string) string {
 	responseBody := get(url, headers, nil)
 	var userLocations UserLocations
 	json.Unmarshal(responseBody, &userLocations)
-	// log.Println("Location " + userLocations.Location[0].LocationID)
-	return userLocations.Location[0].LocationID
+	//log.Printf("User Locations: %v", userLocations)
+	return userLocations
 }
 
 func HistoryRequest(url string, accessToken string, locationID string, limit string) []History {

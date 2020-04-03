@@ -29,7 +29,20 @@ type Response struct {
 	Events       []RingDeviceEvent  `json:"events"`
 }
 
+type Address struct {
+	Street  string `json:"street"`
+	City    string `json:"city"`
+	State   string `json:"state"`
+	ZipCode string `json:"zipcode"`
+}
+
+type Location struct {
+	ID      string  `json:"id"`
+	Name    string  `json:"name"`
+	Address Address `json:"address"`
+}
+
 type RingMetaData struct {
-	LocationID string `json:"locationId"`
-	ZID        string `json:"zId"`
+	Location Location `json:"location"`
+	ZID      string   `json:"zId"`
 }

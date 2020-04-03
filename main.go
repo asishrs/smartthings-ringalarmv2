@@ -25,8 +25,9 @@ func clientError(status int) (events.APIGatewayProxyResponse, error) {
 func getAccessToken(apiRequest public.Request) (string, error) {
 	if apiRequest.RefreshToken != "" {
 		log.Println("Using Refresh Token to Authenticate Ring API")
-		oauthResponse, _ := httputil.AuthRequestWithRefreshToken("https://oauth.ring.com/oauth/token", httputil.OAuthRequestWithRefreshToken{"ring_official_ios", "refresh_token", apiRequest.RefreshToken})
-		return oauthResponse.AccessToken, nil
+		// oauthResponse, _ := httputil.AuthRequestWithRefreshToken("https://oauth.ring.com/oauth/token", httputil.OAuthRequestWithRefreshToken{"ring_official_ios", "refresh_token", apiRequest.RefreshToken})
+		// return oauthResponse.AccessToken, nil
+		return apiRequest.RefreshToken, nil
 	} else {
 		log.Println("Using User Name & Password to Authenticate Ring API")
 		oauthResponse, _ := httputil.AuthRequest("https://oauth.ring.com/oauth/token", httputil.OAuthRequest{"ring_official_ios", "password", apiRequest.Password, "client", apiRequest.User}, "")
@@ -34,32 +35,55 @@ func getAccessToken(apiRequest public.Request) (string, error) {
 	}
 }
 
-func getLocationId(apiRequest public.Request, accessToken string) string {
+func getLocations(apiRequest public.Request, accessToken string) []public.Location {
 	locationID := apiRequest.LocationID
+	locations := []public.Location{}
 	if len(locationID) == 0 {
-		locationID = httputil.LocationRequest("https://app.ring.com/rhq/v1/devices/v1/locations", accessToken)
-	}
+		userLocations := httputil.LocationRequest("https://app.ring.com/rhq/v1/devices/v1/locations", accessToken)
+		for i := range userLocations.Location {
+			userLocation := userLocations.Location[i]
+			locations = append(locations, public.Location{
+				userLocation.LocationID,
+				userLocation.Name,
+				public.Address{
+					userLocation.Address.Line1,
+					userLocation.Address.City,
+					userLocation.Address.State,
+					userLocation.Address.ZipCode,
+				}})
+		}
+	} else {
 
-	return locationID
+		locations = append(locations, public.Location{ID: locationID})
+	}
+	log.Printf("Locations - %v\n", locations)
+	return locations
 }
 
-func getZID(apiRequest public.Request) (string, error) {
+func findOrCreateMetaData(apiRequest public.Request) ([]public.RingMetaData, error) {
+	metaData := []public.RingMetaData{}
 	zID := apiRequest.ZID
-	if len(zID) == 0 {
+	if (len(zID) == 0) && (len(apiRequest.LocationID) == 0) {
 		accessToken, _ := getAccessToken(apiRequest)
-		locationID := getLocationId(apiRequest, accessToken)
-		ringDeviceInfo, err := getDevices(locationID, accessToken)
-		if err != nil {
-			log.Println(err)
-			return "", err
-		}
-		for i := range ringDeviceInfo.Body {
-			if ringDeviceInfo.Body[i].General.V2.DeviceType == "access-code" {
-				zID = ringDeviceInfo.Body[i].General.V2.AdapterZID
+		locations := getLocations(apiRequest, accessToken)
+		for i := range locations {
+			location := locations[i]
+			ringDeviceInfo, err := getDevices(location.ID, accessToken)
+			if err != nil {
+				log.Println(err)
+				return nil, err
+			}
+			for i := range ringDeviceInfo.Body {
+				if ringDeviceInfo.Body[i].General.V2.DeviceType == "access-code" {
+					zID = ringDeviceInfo.Body[i].General.V2.AdapterZID
+					metaData = append(metaData, public.RingMetaData{location, zID})
+				}
 			}
 		}
+	} else {
+		metaData = append(metaData, public.RingMetaData{public.Location{ID: apiRequest.LocationID}, zID})
 	}
-	return zID, nil
+	return metaData, nil
 }
 
 func getDevices(locationID string, accessToken string) (*wsutil.RingDeviceInfo, error) {
@@ -68,13 +92,17 @@ func getDevices(locationID string, accessToken string) (*wsutil.RingDeviceInfo, 
 }
 
 func getStatus(apiRequest public.Request) (events.APIGatewayProxyResponse, error) {
-	//log.Printf("Request: %v", apiRequest)
+	log.Printf("Request: %v", apiRequest)
+	if (len(apiRequest.ZID) == 0) && (len(apiRequest.LocationID) == 0) {
+		log.Println("LocationId of ZID is empty")
+		return clientError(http.StatusInternalServerError)
+	}
 	accessToken, _ := getAccessToken(apiRequest)
-	locationID := getLocationId(apiRequest, accessToken)
-	log.Printf("LocationID %v", locationID)
+	// locationID := getLocationId(apiRequest, accessToken)
+	// log.Printf("LocationID %v", locationID)
 
 	var ringEvents []public.RingDeviceEvent
-	history := httputil.HistoryRequest("https://app.ring.com/api/v1/rs/history", accessToken, locationID, strconv.Itoa(apiRequest.HistoryLimit))
+	history := httputil.HistoryRequest("https://app.ring.com/api/v1/rs/history", accessToken, apiRequest.LocationID, strconv.Itoa(apiRequest.HistoryLimit))
 
 	for i := range history {
 		//result, _ := json.Marshal(history[i])
@@ -88,7 +116,7 @@ func getStatus(apiRequest public.Request) (events.APIGatewayProxyResponse, error
 	}
 
 	var deviceStatus []public.RingDeviceStatus
-	ringDeviceInfo, _ := getDevices(locationID, accessToken)
+	ringDeviceInfo, _ := getDevices(apiRequest.LocationID, accessToken)
 	for i := range ringDeviceInfo.Body {
 		// log.Printf("RDName: %s, Type: %s, Fault: %v, Mode: %s\n", ringDeviceInfo.Body[i].General.V2.Name, ringDeviceInfo.Body[i].General.V2.DeviceType, ringDeviceInfo.Body[i].Device.V1.Faulted, ringDeviceInfo.Body[i].Device.V1.Mode)
 		deviceStatus = append(deviceStatus, public.RingDeviceStatus{ringDeviceInfo.Body[i].General.V2.ZID, ringDeviceInfo.Body[i].General.V2.Name, ringDeviceInfo.Body[i].General.V2.DeviceType, ringDeviceInfo.Body[i].Device.V1.Faulted, ringDeviceInfo.Body[i].Device.V1.Mode})
@@ -112,14 +140,15 @@ func getStatus(apiRequest public.Request) (events.APIGatewayProxyResponse, error
 
 func setStatus(apiRequest public.Request, status string) (events.APIGatewayProxyResponse, error) {
 	accessToken, _ := getAccessToken(apiRequest)
-	locationID := getLocationId(apiRequest, accessToken)
-	zID, err := getZID(apiRequest)
-	if err != nil {
+	//locationID := getLocationId(apiRequest, accessToken)
+	//metaData, err := findOrCreateMetaData(apiRequest)
+	if (len(apiRequest.ZID) == 0) && (len(apiRequest.LocationID) == 0) {
+		log.Println("LocationId of ZID is empty")
 		return clientError(http.StatusInternalServerError)
 	}
 
-	connection := httputil.ConnectionRequest("https://app.ring.com/api/v1/rs/connections", locationID, accessToken)
-	wsutil.Status(zID, status, connection)
+	connection := httputil.ConnectionRequest("https://app.ring.com/api/v1/rs/connections", apiRequest.LocationID, accessToken)
+	wsutil.Status(apiRequest.ZID, status, connection)
 	return events.APIGatewayProxyResponse{
 		StatusCode: 200,
 		Body:       "{\"message\": \"Success\"}",
@@ -127,13 +156,13 @@ func setStatus(apiRequest public.Request, status string) (events.APIGatewayProxy
 }
 
 func getMetaData(apiRequest public.Request) (events.APIGatewayProxyResponse, error) {
-	accessToken, _ := getAccessToken(apiRequest)
-	locationID := getLocationId(apiRequest, accessToken)
-	zID, err := getZID(apiRequest)
+	//accessToken, _ := getAccessToken(apiRequest)
+	//locations := getLocations(apiRequest, accessToken)
+	metaData, err := findOrCreateMetaData(apiRequest)
 	if err != nil {
 		return clientError(http.StatusInternalServerError)
 	}
-	result, err := json.Marshal(public.RingMetaData{locationID, zID})
+	result, err := json.Marshal(metaData)
 	if err != nil {
 		log.Println(err)
 		return clientError(http.StatusInternalServerError)
@@ -150,7 +179,7 @@ func getMetaData(apiRequest public.Request) (events.APIGatewayProxyResponse, err
 // It uses Amazon API Gateway request/responses provided by the aws-lambda-go/events package,
 // However you could use other event sources (S3, Kinesis etc), or JSON-decoded primitive types such as 'string'.
 func Handler(request events.APIGatewayProxyRequest) (events.APIGatewayProxyResponse, error) {
-	log.Printf("Version 2.3")
+	log.Printf("Version 2.4")
 	var apiRequest public.Request
 	err := json.Unmarshal([]byte(request.Body), &apiRequest)
 	if err != nil {
