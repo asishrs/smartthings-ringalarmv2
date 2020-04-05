@@ -7,6 +7,7 @@ type Request struct {
 	ZID          string `json:"zId"`
 	HistoryLimit int    `json:"historyLimit"`
 	RefreshToken string `json:"refreshToken"`
+	AccessToken  string `json:"accessToken"`
 }
 
 // RingDeviceStatus represents the Device data on Ring Alarm Devices
@@ -24,12 +25,34 @@ type RingDeviceEvent struct {
 	Type       string `json:"type"`
 }
 
-type Response struct {
+type DeviceResponse struct {
 	DeviceStatus []RingDeviceStatus `json:"deviceStatus"`
 	Events       []RingDeviceEvent  `json:"events"`
 }
 
-type RingMetaData struct {
-	LocationID string `json:"locationId"`
-	ZID        string `json:"zId"`
+type Address struct {
+	Street  string `json:"street"`
+	City    string `json:"city"`
+	State   string `json:"state"`
+	ZipCode string `json:"zipcode"`
+}
+
+type Location struct {
+	ID      string  `json:"id"`
+	Name    string  `json:"name"`
+	Address Address `json:"address"`
+}
+
+type RingMetaDataResponse struct {
+	Location Location `json:"location"`
+	ZID      string   `json:"zId"`
+}
+
+type ModeChangeResponse struct {
+	Message string `json:"message"`
+}
+
+type ProcessError struct {
+	Code    int    `json:"code"`
+	Message string `json:"message"`
 }

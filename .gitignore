@@ -5,3 +5,4 @@ stack.yaml
 main_test.go
 README.wiki
 test.json
+ring-sessionbased-search.txt
