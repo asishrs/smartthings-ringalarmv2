@@ -41,13 +41,6 @@ type ExchangeRequest struct {
 type ExchangeResponse struct {
 	AccessToken string `json:"access_token"`
 }
-type UserLocation struct {
-	LocationID string `json:"location_id"`
-}
-
-type UserLocations struct {
-	Location []UserLocation `json:"user_locations"`
-}
 
 type ResetChip struct {
 	RequiresTrust bool `json:"reset-chip"`
@@ -150,6 +143,7 @@ type Context struct {
 	AssetKind            string `json:"assetKind"`
 }
 
+// History represents Ring Device History Event
 type History struct {
 	Body     []Body  `json:"body"`
 	Context  Context `json:"context"`
@@ -157,6 +151,7 @@ type History struct {
 	Message  string  `json:"msg"`
 }
 
+// Event represents Ring Device Event
 type Event struct {
 	DeviceName         string `json:"name"`
 	DateInMilliSeconds int64  `json:"dateInMilliSeconds"`
@@ -169,6 +164,29 @@ type RingWSConnection struct {
 	AuthCode string `json:"authCode"`
 }
 
+// Address is a type for Ring Location Address
+type Address struct {
+	Line1   string `json:"address1"`
+	Line2   string `json:"address2"`
+	City    string `json:"city"`
+	State   string `json:"state"`
+	ZipCode string `json:"zip_code"`
+	Country string `json:"country"`
+}
+
+// UserLocation is a type for Ring Location
+type UserLocation struct {
+	ID      string  `json:"location_id"`
+	Name    string  `json:"name"`
+	Address Address `json:"address"`
+}
+
+// UserLocations is an array of Ring Locations
+type UserLocations struct {
+	Location []UserLocation `json:"user_locations"`
+}
+
+// AuthRequest initiates the call to Ring to submit authentication request.
 func AuthRequest(url string, oauthRequest OAuthRequest, code string) (OAuthResponse, error) {
 	// log.Printf("OAuthRequest Data: %v", oauthRequest)
 	var headers map[string]string
@@ -191,47 +209,70 @@ func AuthRequest(url string, oauthRequest OAuthRequest, code string) (OAuthRespo
 	return oauthResponse, nil
 }
 
+// AuthRequestWithRefreshToken return the AccessToken using Refresh Token
 func AuthRequestWithRefreshToken(url string, oauthRequest OAuthRequestWithRefreshToken) (OAuthResponse, error) {
 	// log.Printf("OAuthRequestWithRefreshToken Data: %v", oauthRequest)
-	requestByte, _ := json.Marshal(oauthRequest)
-	responseBody, err := post(url, nil, requestByte)
+	requestByte, err := json.Marshal(oauthRequest)
 	if err != nil {
+		log.Println("Error while trying to get AccessToken using Refresh Token")
 		return OAuthResponse{}, err
 	}
 
+	responseBody, err := post(url, nil, requestByte)
+	if err != nil {
+		log.Println("Error while trying to get AccessToken using Refresh Token")
+		return OAuthResponse{}, err
+	}
+	// log.Printf("AuthRequestWithRefreshToken response - %v\n", string(responseBody))
+
 	var oauthResponse OAuthResponse
 	json.Unmarshal(responseBody, &oauthResponse)
+
 	// log.Println("Temp Token " + oauthResponse.AccessToken)
 	return oauthResponse, nil
 }
 
+// AccessTokenRequest is using to get Token incase of no 2FA
 func AccessTokenRequest(url string, exchangeRequest ExchangeRequest) ExchangeResponse {
 	requestByte, _ := json.Marshal(exchangeRequest)
 	headers := map[string]string{
 		"content-type": "application/json",
 	}
 	responseBody, _ := post(url, headers, requestByte)
+	// log.Printf("AccessTokenRequest response - %v\n", string(responseBody))
 	var exchangeResponse ExchangeResponse
 	json.Unmarshal(responseBody, &exchangeResponse)
 	// log.Printf("Access Token %v", exchangeResponse.AccessToken)
 	return exchangeResponse
 }
 
-func LocationRequest(url string, accessToken string) string {
+// LocationRequest finds the location id for the Ring Account.
+// If there are multiple locations in the account, the first location from the API response is returned.
+// TODO: Implement support for multiple locations.
+func LocationRequest(url string, accessToken string) (UserLocation, error) {
 	headers := map[string]string{
 		"Authorization": "Bearer " + accessToken,
 	}
 
-	responseBody := get(url, headers, nil)
+	responseBody, err := get(url, headers, nil)
+	if err != nil {
+		log.Println("Error while trying to make Ring Location Request")
+		return UserLocation{}, err
+	}
+	//log.Printf("Location response - %v\n", string(responseBody))
 	var userLocations UserLocations
 	json.Unmarshal(responseBody, &userLocations)
 	// log.Println("Location " + userLocations.Location[0].LocationID)
-	return userLocations.Location[0].LocationID
+	return userLocations.Location[0], nil
 }
 
-func HistoryRequest(url string, accessToken string, locationID string, limit string) []History {
+// HistoryRequest finds all the events for Ring Devices
+func HistoryRequest(url string, accessToken string, locationID string, limit string) ([]History, error) {
 	headers := map[string]string{
-		"Authorization": "Bearer " + accessToken,
+		"Authorization":   "Bearer " + accessToken,
+		"Accept":          "application/json",
+		"Accept-Encoding": "gzip, deflate, br",
+		"Accept-Language": "en-US,en;q=0.9",
 	}
 
 	params := map[string]string{
@@ -241,27 +282,42 @@ func HistoryRequest(url string, accessToken string, locationID string, limit str
 		"maxLevel":  "50",
 	}
 
-	responseBody := get(url, headers, params)
+	responseBody, err := get(url, headers, params)
+	log.Printf("History response body - %v\n", string(responseBody))
+	if err != nil {
+		log.Println("Error while trying to get the History Event")
+		return nil, err
+	}
 	var history []History
 	json.Unmarshal(responseBody, &history)
-	return history
+	return history, nil
 }
 
-func ConnectionRequest(url string, locationId string, accessToken string) RingWSConnection {
+// ConnectionRequest finds the WS connection server and authentication code
+func ConnectionRequest(url string, locationID string, accessToken string) (RingWSConnection, error) {
 	headers := map[string]string{
 		"Authorization": "Bearer " + accessToken,
 		"Content-Type":  "application/x-www-form-urlencoded",
 	}
 
-	responseBody, _ := post(url, headers, []byte("accountId="+locationId))
+	responseBody, err := post(url, headers, []byte("accountId="+locationID))
+	if err != nil {
+		log.Println("Error while trying to access get Ring WS Connection Details")
+		return RingWSConnection{}, err
+	}
+	// log.Printf("ConnectionRequest Respose - %v\n", string(responseBody))
 	var connection RingWSConnection
 	json.Unmarshal(responseBody, &connection)
-	// log.Println("Connection [" + connection.Server + ", " + connection.AuthCode + "]")
-	return connection
+	log.Println("Connection [" + connection.Server + ", " + connection.AuthCode + "]")
+	return connection, nil
 }
 
-func get(url string, headers map[string]string, params map[string]string) []byte {
-	req, _ := http.NewRequest("GET", url, nil)
+func get(url string, headers map[string]string, params map[string]string) ([]byte, error) {
+	req, err := http.NewRequest("GET", url, nil)
+	if err != nil {
+		log.Println(err)
+		return nil, err
+	}
 	for name, value := range headers {
 		req.Header.Add(name, value)
 	}
@@ -274,26 +330,39 @@ func get(url string, headers map[string]string, params map[string]string) []byte
 
 	res, err := http.DefaultClient.Do(req)
 	if err != nil {
-		log.Fatal(err)
+		log.Println(err)
+		return nil, err
 	}
 	defer res.Body.Close()
-	responseBody, _ := ioutil.ReadAll(res.Body)
-	return responseBody
+	responseBody, err := ioutil.ReadAll(res.Body)
+	if err != nil {
+		log.Println(err)
+		return nil, err
+	}
+	return responseBody, nil
 }
 
 func post(url string, headers map[string]string, requestBody []byte) ([]byte, error) {
-	req, _ := http.NewRequest("POST", url, bytes.NewBuffer(requestBody))
+	req, err := http.NewRequest("POST", url, bytes.NewBuffer(requestBody))
+	if err != nil {
+		log.Println(err)
+		return nil, err
+	}
 	for name, value := range headers {
 		req.Header.Add(name, value)
 	}
 
 	res, err := http.DefaultClient.Do(req)
 	if err != nil {
-		log.Fatal(err)
+		log.Println(err)
 		return nil, err
 	}
 	defer res.Body.Close()
-	responseBody, _ := ioutil.ReadAll(res.Body)
+	responseBody, err := ioutil.ReadAll(res.Body)
+	if err != nil {
+		log.Println(err)
+		return nil, err
+	}
 	// log.Printf("Url - %v, Header - %v", url, headers)
 	return responseBody, nil
 }

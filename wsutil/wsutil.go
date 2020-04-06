@@ -60,10 +60,10 @@ func Status(zid string, mode string, connection httputil.RingWSConnection) (stri
 
 func wsConnection(connection httputil.RingWSConnection) (string, error) {
 	wsConnectionTemplate := template.New("wscon")
-	wsConnectionTemplate, tmplErr := wsConnectionTemplate.Parse("wss://{{.Server}}/socket.io/?authcode={{.AuthCode}}&ack=false&EIO=3&transport=websocket")
-	if tmplErr != nil {
-		log.Fatal("Parse: ", tmplErr)
-		return "", tmplErr
+	wsConnectionTemplate, err := wsConnectionTemplate.Parse("wss://{{.Server}}/socket.io/?authcode={{.AuthCode}}&ack=false&EIO=3&transport=websocket")
+	if err != nil {
+		log.Println("Parse: ", err)
+		return "", err
 	}
 	var wsConnection bytes.Buffer
 	wsConnectionTemplate.Execute(&wsConnection, connection)
@@ -75,7 +75,7 @@ func wssCall(connection httputil.RingWSConnection, wssInput string, messageType 
 
 	wssUrl, err := wsConnection(connection)
 	if err != nil {
-		log.Fatal("Parse: ", err)
+		log.Println("Parse: ", err)
 		return "", err
 	}
 
@@ -87,7 +87,7 @@ func wssCall(connection httputil.RingWSConnection, wssInput string, messageType 
 
 	c, _, err := websocket.DefaultDialer.Dial(wssUrl, nil)
 	if err != nil {
-		log.Fatal("dial:", err)
+		log.Println("dial:", err)
 		return "", err
 	}
 	defer c.Close()
@@ -134,12 +134,12 @@ func ActiveDevices(connection httputil.RingWSConnection) (*RingDeviceInfo, error
 	wssInput := "42[\"message\",{\"msg\":\"DeviceInfoDocGetList\",\"seq\":1}]"
 	wssResponse, err := wssCall(connection, wssInput, "DeviceInfoDocGetList", 3)
 	if err != nil {
-		log.Fatal("Error: ", err)
+		log.Println("Error: ", err)
 		return nil, err
 	}
 
 	if len(wssResponse) == 0 {
-		log.Fatal("No Response: ", err)
+		log.Println("No Response: ", err)
 		return nil, err
 	}
 
@@ -151,7 +151,7 @@ func ActiveDevices(connection httputil.RingWSConnection) (*RingDeviceInfo, error
 	// log.Printf("Response: %s", responseBody)
 	err = json.Unmarshal([]byte(responseBody), &ringDeviceInfo)
 	if err != nil {
-		log.Fatal("Unable to Parse Status Response Data: ", err)
+		log.Println("Unable to Parse Status Response Data: ", err)
 		return nil, err
 	}
 
