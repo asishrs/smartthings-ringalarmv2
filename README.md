@@ -6,6 +6,8 @@
 
 **Note:** This approach is tested using [SmartThings Classic App](https://support.smartthings.com/hc/en-us/articles/205380554-Things-in-the-SmartThings-Classic-app). If you are on in new SmartThings app, let me know if this approach requires any changes. PRs are welcome!
 
+:warning: [April 5 2020] Due to the recent changes in the Ring 2FA changes, this application was updated to support the 2FA use cases. Unfortunately, this means the support for the accounts without 2FA is no more actively supported. Please update your Ring Account with 2FA support to use this.
+
 ------
 
 <u>**SmartThings - Ring Alarm v2**</u>
