@@ -15,18 +15,6 @@ import (
 	"github.com/gorilla/websocket"
 )
 
-// RingDeviceInfo represents the raw websocket respone from Ring Alarm WebService
-type RingDeviceInfo struct {
-	Message   string           `json:"msg"`
-	DataType  string           `json:"datatype"`
-	Sequence  int              `json:"seq"`
-	Source    string           `json:"src"`
-	Body      []httputil.Body  `json:"body"`
-	SessionID int64            `json:"sessionId"`
-	Status    int              `json:"status"`
-	Context   httputil.Context `json:"context"`
-}
-
 func Status(zid string, mode string, connection httputil.RingWSConnection) (string, error) {
 	wssInput := "42[\n" +
 		"    \"message\",\n" +
@@ -130,7 +118,7 @@ func wssCall(connection httputil.RingWSConnection, wssInput string, messageType 
 }
 
 // ActiveDevices - Find all active devices in the Ring Alarm account.
-func ActiveDevices(connection httputil.RingWSConnection) (*RingDeviceInfo, error) {
+func ActiveDevices(connection httputil.RingWSConnection) (*httputil.RingDeviceInfo, error) {
 	wssInput := "42[\"message\",{\"msg\":\"DeviceInfoDocGetList\",\"seq\":1}]"
 	wssResponse, err := wssCall(connection, wssInput, "DeviceInfoDocGetList", 3)
 	if err != nil {
@@ -143,7 +131,7 @@ func ActiveDevices(connection httputil.RingWSConnection) (*RingDeviceInfo, error
 		return nil, err
 	}
 
-	var ringDeviceInfo RingDeviceInfo
+	var ringDeviceInfo httputil.RingDeviceInfo
 	runes := []rune(wssResponse)
 	responseBody := string(runes[13 : len(wssResponse)-1])
 	//log.Printf("Response: %s\n\nJSON: %s", wssResponse, responseBody)

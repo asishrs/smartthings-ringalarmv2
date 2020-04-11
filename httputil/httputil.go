@@ -143,6 +143,18 @@ type Context struct {
 	AssetKind            string `json:"assetKind"`
 }
 
+// RingDeviceInfo represents the raw websocket respone from Ring Alarm WebService
+type RingDeviceInfo struct {
+	Message   string  `json:"msg"`
+	DataType  string  `json:"datatype"`
+	Sequence  int     `json:"seq"`
+	Source    string  `json:"src"`
+	Body      []Body  `json:"body"`
+	SessionID int64   `json:"sessionId"`
+	Status    int     `json:"status"`
+	Context   Context `json:"context"`
+}
+
 // History represents Ring Device History Event
 type History struct {
 	Body     []Body  `json:"body"`

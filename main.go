@@ -71,7 +71,7 @@ func getZID(apiRequest public.Request, accessToken, locationID string) (string, 
 	return zID, nil
 }
 
-func getDevices(locationID string, accessToken string) (*wsutil.RingDeviceInfo, error) {
+func getDevices(locationID string, accessToken string) (*httputil.RingDeviceInfo, error) {
 	connection, err := httputil.ConnectionRequest("https://app.ring.com/api/v1/rs/connections", locationID, accessToken)
 	if err != nil {
 		return nil, err
@@ -160,6 +160,21 @@ func getMetaData(apiRequest public.Request) (events.APIGatewayProxyResponse, err
 		public.Address{location.Address.Line1, location.Address.City, location.Address.State, location.Address.ZipCode}}, zID})
 }
 
+func getRawData(apiRequest public.Request) (events.APIGatewayProxyResponse, error) {
+	location, err := getLocation(apiRequest, apiRequest.AccessToken)
+	if err != nil {
+		log.Println("Error while trying to get Ring Location Id.")
+		return sendResponse(public.ProcessError{http.StatusInternalServerError, http.StatusText(http.StatusInternalServerError)})
+	}
+
+	devices, err := getDevices(apiRequest.AccessToken, location.ID)
+	if err != nil {
+		return sendResponse(public.ProcessError{http.StatusInternalServerError, http.StatusText(http.StatusInternalServerError)})
+	}
+	return sendResponse(public.RingDevices{public.Location{location.ID, location.Name,
+		public.Address{location.Address.Line1, location.Address.City, location.Address.State, location.Address.ZipCode}}, devices})
+}
+
 func sendResponse(data interface{}) (events.APIGatewayProxyResponse, error) {
 	result, _ := json.Marshal(data)
 
@@ -173,7 +188,7 @@ func sendResponse(data interface{}) (events.APIGatewayProxyResponse, error) {
 // It uses Amazon API Gateway request/responses provided by the aws-lambda-go/events package,
 // However you could use other event sources (S3, Kinesis etc), or JSON-decoded primitive types such as 'string'.
 func Handler(request events.APIGatewayProxyRequest) (events.APIGatewayProxyResponse, error) {
-	log.Println("Ring Alarm - Version 3.3.0")
+	log.Println("Ring Alarm - Version 3.4.0")
 	var apiRequest public.Request
 	err := json.Unmarshal([]byte(request.Body), &apiRequest)
 	if err != nil {
@@ -194,6 +209,8 @@ func Handler(request events.APIGatewayProxyRequest) (events.APIGatewayProxyRespo
 		return setStatus(apiRequest, "none")
 	case "meta":
 		return getMetaData(apiRequest)
+	case "raw":
+		return getRawData(apiRequest)
 	default:
 		return clientError(http.StatusUnprocessableEntity)
 	}
