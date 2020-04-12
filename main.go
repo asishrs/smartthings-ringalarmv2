@@ -160,7 +160,7 @@ func getMetaData(apiRequest public.Request) (events.APIGatewayProxyResponse, err
 		public.Address{location.Address.Line1, location.Address.City, location.Address.State, location.Address.ZipCode}}, zID})
 }
 
-func getRawData(apiRequest public.Request) (events.APIGatewayProxyResponse, error) {
+func getRawDevices(apiRequest public.Request) (events.APIGatewayProxyResponse, error) {
 	location, err := getLocation(apiRequest, apiRequest.AccessToken)
 	if err != nil {
 		log.Println("Error while trying to get Ring Location Id.")
@@ -209,8 +209,8 @@ func Handler(request events.APIGatewayProxyRequest) (events.APIGatewayProxyRespo
 		return setStatus(apiRequest, "none")
 	case "meta":
 		return getMetaData(apiRequest)
-	case "raw":
-		return getRawData(apiRequest)
+	case "devices":
+		return getRawDevices(apiRequest)
 	default:
 		return clientError(http.StatusUnprocessableEntity)
 	}
