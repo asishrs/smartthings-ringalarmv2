@@ -166,11 +166,14 @@ func getRawDevices(apiRequest public.Request) (events.APIGatewayProxyResponse, e
 		log.Println("Error while trying to get Ring Location Id.")
 		return sendResponse(public.ProcessError{http.StatusInternalServerError, http.StatusText(http.StatusInternalServerError)})
 	}
+	log.Printf("Location ID %v", location.ID)
 
-	devices, err := getDevices(apiRequest.AccessToken, location.ID)
+	devices, err := getDevices(location.ID, apiRequest.AccessToken)
 	if err != nil {
 		return sendResponse(public.ProcessError{http.StatusInternalServerError, http.StatusText(http.StatusInternalServerError)})
 	}
+	log.Printf("Raw Device \n%v", devices)
+
 	return sendResponse(public.RingDevices{public.Location{location.ID, location.Name,
 		public.Address{location.Address.Line1, location.Address.City, location.Address.State, location.Address.ZipCode}}, devices})
 }
