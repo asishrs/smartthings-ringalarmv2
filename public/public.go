@@ -1,5 +1,9 @@
 package public
 
+import (
+	"github.com/asishrs/smartthings-ringalarmv2/httputil"
+)
+
 type Request struct {
 	User         string `json:"user"`
 	Password     string `json:"password"`
@@ -46,6 +50,11 @@ type Location struct {
 type RingMetaDataResponse struct {
 	Location Location `json:"location"`
 	ZID      string   `json:"zId"`
+}
+
+type RingDevices struct {
+	Location Location                 `json:"location"`
+	Devices  *httputil.RingDeviceInfo `json:"devices"`
 }
 
 type ModeChangeResponse struct {
