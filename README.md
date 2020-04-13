@@ -92,6 +92,10 @@ You will be using [AWS Cloud​Formation template](aws/ringalarm-gateway.yaml) t
 
 You need to have either this repository cloned or save a copy of [ringalarm-gateway.yaml](https://raw.githubusercontent.com/asishrs/smartthings-ringalarmv2/master/aws/ringalarm-gateway.yaml) file on your local before proceeding. 
 
+You can watch the instruction in the GIF or read the step-by-step instructions. 
+
+![](images/cloud-formation.gif?raw=true "AWS Setup - Ring Alarm")
+
 1. Login to AWS Account and the navigate to https://console.aws.amazon.com/cloudformation/home?region=us-east-1 (You may be different region based on your account setup)
 1. Click on **Create Stack** and choose **With new resources(standard)**
 1. On the **Specify template** page choose **Upload a template file**
