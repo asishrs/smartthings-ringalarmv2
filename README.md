@@ -1,5 +1,8 @@
 # SmartThings - Ring Alarm ![](https://github.com/asishrs/smartthings-ringalarmv2/workflows/Build/badge.svg) ![](https://github.com/asishrs/smartthings-ringalarmv2/workflows/Release/badge.svg) ![](https://goreportcard.com/badge/github.com/asishrs/smartthings-ringalarmv2)
 
+:warning: [Sep 22 2021] This repo is not actively maintained and I am not planning to add any features. I switched to Hubitat and use [HubitatCommunity/hubitat_ring_integration](https://github.com/HubitatCommunity/hubitat_ring_integration)
+
+
 :loudspeaker: ​This is the `version 3 `of this application. If you are looking for older versions see the links below. No support for older versions. In case of issues, I recommend to update to the latest versions.
 * [version 1](https://github.com/asishrs/smartthings-ringalarm)
 * [version 2](v2.md) 
