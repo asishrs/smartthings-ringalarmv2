@@ -45,7 +45,7 @@ func getAccessToken(apiRequest public.Request) (string, string, error) {
 }
 
 func getLocation(apiRequest public.Request, accessToken string) (httputil.UserLocation, error) {
-	location, err := httputil.LocationRequest("https://app.ring.com/rhq/v1/devices/v1/locations", accessToken)
+	location, err := httputil.LocationRequest("https://app.ring.com/devices/v1/locations", accessToken)
 	if err != nil {
 		return httputil.UserLocation{}, err
 	}
